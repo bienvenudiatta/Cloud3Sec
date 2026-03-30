@@ -1,0 +1,11 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: web-route
+  namespace: bienvenucloud-dev
+spec:
+  to:
+    kind: Service
+    name: svc-web
+  port:
+    targetPort: 80
