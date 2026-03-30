@@ -1,1 +1,57 @@
-
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: vm-firewall
+  namespace: bienvenucloud-dev
+  labels:
+    app: firewall
+spec:
+  runStrategy: Always
+  template:
+    metadata:
+      labels:
+        app: firewall
+    spec:
+      domain:
+        cpu:
+          cores: 1
+        memory:
+          guest: 512Mi
+        devices:
+          disks:
+            - name: rootdisk
+              disk: { bus: virtio }
+            - name: cloudinitdisk
+              disk: { bus: virtio }
+          interfaces:
+            - name: default
+              masquerade: {}
+            - name: dmz
+              bridge: {}
+            - name: lan
+              bridge: {}
+      networks:
+        - name: default
+          pod: {}
+        - name: dmz
+          multus:
+            networkName: dmz-network
+        - name: lan
+          multus:
+            networkName: lan-network
+      volumes:
+        - name: rootdisk
+          containerDisk:
+            image: quay.io/containerdisks/ubuntu:22.04
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |
+              #cloud-config
+              runcmd:
+                - apt-get update -y && apt-get install -y iptables
+                - sysctl -w net.ipv4.ip_forward=1
+                - ip link set enp2s0 up
+                - ip link set enp3s0 up
+                - ip addr add 192.168.100.1/24 dev enp2s0
+                - ip addr add 192.168.10.1/24 dev enp3s0
+                - iptables -P FORWARD ACCEPT
