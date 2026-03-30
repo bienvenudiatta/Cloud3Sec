@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-db
+  namespace: bienvenucloud-dev
+  labels:
+    app: mysql
+  annotations:
+    k8s.v1.cni.cncf.io/networks: lan-network
+spec:
+  containers:
+    - name: mysql
+      image: mysql:8.0
+      env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+      ports:
+        - containerPort: 3306
